@@ -177,8 +177,12 @@ def generate_graph(
                     # For Debugging:
                     "environment": {
                         # "GOLOG_LOG_LEVEL": "debug",
-                        "RUST_LOG": "debug",
                         "GOSSIPSUB_INTEROP_NODE_ID": str(i),
+                        "QUIC_GO_DISABLE_ECN": "true",
+                        "QUIC_GO_DISABLE_GSO": "true",
+                        "QUIC_GO_DISABLE_RECEIVE_BUFFER_WARNING": "true",
+                        "QUIC_GO_SHADOW_BASIC_CONN": "true",
+                        "RUST_LOG": "debug",
                     },
                     "path": binary_path,
                 }
