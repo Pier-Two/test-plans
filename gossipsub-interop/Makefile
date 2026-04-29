@@ -1,9 +1,20 @@
 # Default target
 all: binaries
 
+C_LEAN_LIBP2P_ROOT ?= ../../..
+C_LEAN_LIBP2P_BUILD ?= $(C_LEAN_LIBP2P_ROOT)/build-gossipsub-interop
+C_LEAN_LIBP2P_GOSSIPSUB_BIN ?= $(C_LEAN_LIBP2P_BUILD)/bin/c_lean_libp2p_gossipsub_interop
+
 binaries:
 	cd go-libp2p && go build -linkshared -o gossipsub-bin
 	cd rust-libp2p && cargo build
+
+c-lean-libp2p:
+	cmake -S "$(C_LEAN_LIBP2P_ROOT)" -B "$(C_LEAN_LIBP2P_BUILD)" \
+		-DBUILD_TESTING=OFF \
+		-DLIBP2P_BUILD_GOSSIPSUB_INTEROP_BINARY=ON
+	cmake --build "$(C_LEAN_LIBP2P_BUILD)" --target c_lean_libp2p_gossipsub_interop --parallel
+	test -x "$(C_LEAN_LIBP2P_GOSSIPSUB_BIN)"
 
 # Clean all generated shadow simulation files
 clean:

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/ed25519"
 	"encoding/binary"
 	"encoding/json"
 	"flag"
@@ -55,11 +54,10 @@ func pubsubOptions(slogger *slog.Logger, params pubsub.GossipSubParams, pme *par
 
 // compute a private key for node id
 func nodePrivKey(id int) crypto.PrivKey {
-	seed := make([]byte, ed25519.SeedSize)
-	binary.LittleEndian.PutUint64(seed[:8], uint64(id))
-	data := ed25519.NewKeyFromSeed(seed)
+	seed := make([]byte, 32)
+	binary.BigEndian.PutUint64(seed[24:32], uint64(id)+1)
 
-	privkey, err := crypto.UnmarshalEd25519PrivateKey(data)
+	privkey, err := crypto.UnmarshalSecp256k1PrivateKey(seed)
 	if err != nil {
 		panic(err)
 	}
@@ -118,8 +116,7 @@ func main() {
 
 	// listen for incoming connections
 	h, err := libp2p.New(
-		libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/9000"),
-		// libp2p.ListenAddrStrings("/ip4/0.0.0.0/udp/9000/quic-v1"),
+		libp2p.ListenAddrStrings("/ip4/0.0.0.0/udp/9000/quic-v1"),
 		libp2p.Identity(nodePrivKey(nodeId)),
 		libp2p.ConnectionManager(connmgr.NullConnMgr{}),
 	)
@@ -153,9 +150,7 @@ func (c *ShadowConnector) ConnectTo(ctx context.Context, h host.Host, id int) er
 	if err != nil {
 		panic(err)
 	}
-	addr := fmt.Sprintf("/ip4/%s/tcp/9000/p2p/%s", addrs[0], peerId)
-	// TODO support QUIC in Shadow
-	// addr := fmt.Sprintf("/ip4/%s/udp/9000/quic-v1/p2p/%s", addrs[0], peerId)
+	addr := fmt.Sprintf("/ip4/%s/udp/9000/quic-v1/p2p/%s", addrs[0], peerId)
 	info, err := peer.AddrInfoFromString(addr)
 	if err != nil {
 		panic(err)

@@ -1,6 +1,6 @@
 use clap::Parser;
 use libp2p::{
-    core::upgrade, identify, identity::Keypair, noise, tcp, yamux, PeerId, Swarm, Transport,
+    core::muxing::StreamMuxerBox, identify, identity::Keypair, quic, PeerId, Swarm, Transport,
 };
 use libp2p_gossipsub::{self, MessageAuthenticity, MessageId, ValidationMode};
 use slog::{o, Drain, FnValue, Logger, PushFnValue, Record};
@@ -99,10 +99,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     slog::info!(stderr_logger, "Local peer id: {}", local_peer_id);
     slog::info!(stderr_logger, "Node ID: {}", node_id);
     // Create a transport
-    let transport = tcp::tokio::Transport::default()
-        .upgrade(upgrade::Version::V1)
-        .authenticate(noise::Config::new(&local_key)?)
-        .multiplex(yamux::Config::default())
+    let transport = quic::tokio::Transport::new(quic::Config::new(&local_key))
+        .map(|(peer_id, conn), _| (peer_id, StreamMuxerBox::new(conn)))
         .boxed();
 
     // Create gossipsub configuration
@@ -143,7 +141,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         libp2p::swarm::Config::with_tokio_executor(),
     );
     // Listen on all interfaces
-    swarm.listen_on("/ip4/0.0.0.0/tcp/9000".parse()?)?;
+    swarm.listen_on("/ip4/0.0.0.0/udp/9000/quic-v1".parse()?)?;
     // Run the experiment
     run_experiment(
         start_time,

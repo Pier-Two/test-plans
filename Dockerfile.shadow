@@ -1,0 +1,49 @@
+FROM ubuntu:24.04
+
+ARG SHADOW_REF=v3.3.0
+ARG GO_VERSION=1.24.1
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/root/.cargo/bin:/root/.local/bin:/usr/local/go/bin:${PATH}"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    clang \
+    cmake \
+    curl \
+    g++ \
+    gcc \
+    git \
+    iproute2 \
+    libc-dbg \
+    libclang-dev \
+    libglib2.0-0 \
+    libglib2.0-dev \
+    make \
+    netbase \
+    ninja-build \
+    pkg-config \
+    python3 \
+    python3-networkx \
+    python3-pip \
+    python3-yaml \
+    xz-utils \
+    util-linux \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o /tmp/go.tgz \
+    && tar -C /usr/local -xzf /tmp/go.tgz \
+    && rm /tmp/go.tgz
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+    | sh -s -- -y --profile minimal --default-toolchain stable
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+RUN git clone --depth 1 --branch "${SHADOW_REF}" https://github.com/shadow/shadow.git /shadow \
+    && cd /shadow \
+    && ./setup build --clean --prefix /usr/local -j2 \
+    && ./setup install
+
+WORKDIR /workspace

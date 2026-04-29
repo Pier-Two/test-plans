@@ -15,14 +15,19 @@ _, err = fmt.Sscanf(hostname, "node%d", &nodeId)
 
 ## Peer IDs
 
-Implementations MUST deterministically generate their ED25519 peer ID from their node ID by using their little-endian encoded node ID as their ED25519 key.
+This fork uses QUIC-v1 and deterministic secp256k1 identities so
+c-lean-libp2p can join the matrix. Implementations MUST derive their peer ID
+from a secp256k1 private key whose 32-byte scalar is zero except for the final
+8 bytes, which contain `nodeID + 1` encoded as big-endian `uint64`.
 
 Example:
 ```rust
 pub fn node_priv_key(id: NodeID) -> identity::Keypair {
     let mut seed = [0u8; 32];
-    LittleEndian::write_i32(&mut seed[0..4], id);
-    identity::Keypair::ed25519_from_bytes(seed).expect("Failed to create keypair")
+    BigEndian::write_u64(&mut seed[24..32], (id as u64) + 1);
+    let secret = identity::secp256k1::SecretKey::try_from_bytes(seed)
+        .expect("Failed to create keypair");
+    identity::Keypair::from(identity::secp256k1::Keypair::from(secret))
 }
 ```
 

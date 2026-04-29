@@ -30,7 +30,7 @@ pub async fn connect_to<B: NetworkBehaviour + Send>(
     let ip = ips
         .pop()
         .ok_or(ConnectorError::FailedToResolveAddress(hostname))?;
-    let addr = format!("/ip4/{ip}/tcp/9000");
+    let addr = format!("/ip4/{ip}/udp/9000/quic-v1");
     let multi_addr = Multiaddr::from_str(&addr)?;
 
     // Get the PeerId from the target node's ID

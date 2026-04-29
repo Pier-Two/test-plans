@@ -1,15 +1,17 @@
 use crate::script_instruction::NodeID;
-use byteorder::{ByteOrder, LittleEndian};
+use byteorder::{BigEndian, ByteOrder};
 use libp2p::identity;
 
 /// Generate a private key for a node ID
 pub fn node_priv_key(id: NodeID) -> identity::Keypair {
     // Create a deterministic seed based on the node ID
     let mut seed = [0u8; 32];
-    LittleEndian::write_i32(&mut seed[0..4], id);
+    BigEndian::write_u64(&mut seed[24..32], (id as u64) + 1);
 
     // Create a keypair from the seed
-    identity::Keypair::ed25519_from_bytes(seed).expect("Failed to create keypair")
+    let secret =
+        identity::secp256k1::SecretKey::try_from_bytes(seed).expect("Failed to create keypair");
+    identity::Keypair::from(identity::secp256k1::Keypair::from(secret))
 }
 
 #[test]
@@ -28,7 +30,7 @@ fn test_node_priv_key() {
     let hash = hasher.finalize();
 
     let hash_str = format!("{:02x}", hash);
-    let expected_hash = "11395ea896d00ca25f7f648ebb336488ee092096a5498d90d76b92eaec27867a";
+    let expected_hash = "9da32ad6bf8dd4b3ad55bffea81a5288b97b3cba4da93a93f718a681f2f8aa4b";
     assert_eq!(
         hash_str, expected_hash,
         "Implementation did not generate peer ids correctly"

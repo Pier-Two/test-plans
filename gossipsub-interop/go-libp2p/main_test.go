@@ -25,7 +25,7 @@ func TestPeerIDGeneration(t *testing.T) {
 		hash.Write([]byte(peerID))
 	}
 	hashStr := fmt.Sprintf("%x", hash.Sum(nil))
-	expectedHash := "11395ea896d00ca25f7f648ebb336488ee092096a5498d90d76b92eaec27867a"
+	expectedHash := "9da32ad6bf8dd4b3ad55bffea81a5288b97b3cba4da93a93f718a681f2f8aa4b"
 	if hashStr != expectedHash {
 		t.Errorf("Did not generate peer ids correctly. Saw %s expected %s", hashStr, expectedHash)
 	}

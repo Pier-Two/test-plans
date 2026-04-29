@@ -1,4 +1,5 @@
 import random
+import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -341,6 +342,10 @@ def scenario(
 
 
 def composition(preset_name: str) -> List[Binary]:
+    c_lean_binary = os.environ.get(
+        "C_LEAN_LIBP2P_GOSSIPSUB_BIN",
+        "../../../build-gossipsub-interop/bin/c_lean_libp2p_gossipsub_interop",
+    )
     match preset_name:
         case "all-go":
             return [Binary("go-libp2p/gossipsub-bin", percent_of_nodes=100)]
@@ -357,6 +362,28 @@ def composition(preset_name: str) -> List[Binary]:
                     "rust-libp2p/target/debug/rust-libp2p-gossip", percent_of_nodes=50
                 ),
                 Binary("go-libp2p/gossipsub-bin", percent_of_nodes=50),
+            ]
+        case "all-c-lean":
+            return [Binary(c_lean_binary, percent_of_nodes=100)]
+        case "c-lean-and-go":
+            return [
+                Binary(c_lean_binary, percent_of_nodes=50),
+                Binary("go-libp2p/gossipsub-bin", percent_of_nodes=50),
+            ]
+        case "c-lean-and-rust":
+            return [
+                Binary(c_lean_binary, percent_of_nodes=50),
+                Binary(
+                    "rust-libp2p/target/debug/rust-libp2p-gossip", percent_of_nodes=50
+                ),
+            ]
+        case "c-lean-rust-go":
+            return [
+                Binary(c_lean_binary, percent_of_nodes=34),
+                Binary(
+                    "rust-libp2p/target/debug/rust-libp2p-gossip", percent_of_nodes=33
+                ),
+                Binary("go-libp2p/gossipsub-bin", percent_of_nodes=33),
             ]
     raise ValueError(f"Unknown preset name: {preset_name}")
 

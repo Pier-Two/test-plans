@@ -3,7 +3,7 @@ use std::ffi::OsStr;
 use std::fmt::Display;
 use std::{path::Path, time::Duration};
 
-use byteorder::{ByteOrder, LittleEndian};
+use byteorder::{BigEndian, ByteOrder};
 use libp2p::identity::Keypair;
 use libp2p_gossipsub::ConfigBuilder;
 use serde::{Deserialize, Serialize};
@@ -41,10 +41,12 @@ impl From<NodeID> for Keypair {
     fn from(value: NodeID) -> Self {
         // Create a deterministic seed based on the node ID
         let mut seed = [0u8; 32];
-        LittleEndian::write_i32(&mut seed[0..4], value.0);
+        BigEndian::write_u64(&mut seed[24..32], (value.0 as u64) + 1);
 
         // Create a keypair from the seed
-        Keypair::ed25519_from_bytes(seed).expect("Failed to create keypair")
+        let secret = libp2p::identity::secp256k1::SecretKey::try_from_bytes(seed)
+            .expect("Failed to create keypair");
+        Keypair::from(libp2p::identity::secp256k1::Keypair::from(secret))
     }
 }
 /// ScriptInstruction represents an instruction that can be executed in a script.
