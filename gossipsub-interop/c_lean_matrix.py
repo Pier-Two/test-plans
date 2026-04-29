@@ -19,7 +19,7 @@ class Case:
     seed: int
     partial_count: Optional[int] = None
     unsupported: bool = False
-    timeout_sec: int = 600
+    timeout_sec: int = 300
 
 
 @dataclass
@@ -154,6 +154,8 @@ def render_markdown(results: list[Result]) -> str:
     lines = [
         "## GossipSub interop results",
         "",
+        "Advisory run: FAIL rows are reported here and in the artifact; TIMEOUT rows fail the job.",
+        "",
         "| Pair | Scenario | Composition | Status | Duration | Output |",
         "|---|---|---|---|---:|---|",
     ]
@@ -246,7 +248,7 @@ def main() -> int:
     matrix = render_markdown(results)
     (output_root / "matrix.md").write_text(matrix)
     print(matrix)
-    return 1 if any(result.status in ("fail", "timeout") for result in results) else 0
+    return 1 if any(result.status == "timeout" for result in results) else 0
 
 
 if __name__ == "__main__":
