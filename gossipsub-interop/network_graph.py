@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import os
 import random
 from typing import List
 import networkx as nx
@@ -168,6 +169,23 @@ def generate_graph(
         node_type = random.choices(
             node_types, weights=[nt.weight for nt in node_types]
         )[0]
+        environment = {
+            # "GOLOG_LOG_LEVEL": "debug",
+            "GOSSIPSUB_INTEROP_NODE_ID": str(i),
+            "QUIC_GO_DISABLE_ECN": "true",
+            "QUIC_GO_DISABLE_GSO": "true",
+            "QUIC_GO_DISABLE_RECEIVE_BUFFER_WARNING": "true",
+            "QUIC_GO_SHADOW_BASIC_CONN": "true",
+            "QUINN_UDP_SHADOW_RECVMSG": "true",
+            "OPENSSL_ia32cap": "0:0",
+            "AWSLC_IGNORE_FORK_UBE_DETECTION": "1",
+            "C_LEAN_LIBP2P_GOSSIPSUB_TRACE": "1",
+            "RUST_LOG": "info",
+        }
+        if os.environ.get("C_LEAN_LIBP2P_GOSSIPSUB_IDENTITY_DIR"):
+            environment["C_LEAN_LIBP2P_GOSSIPSUB_IDENTITY_DIR"] = os.environ[
+                "C_LEAN_LIBP2P_GOSSIPSUB_IDENTITY_DIR"
+            ]
 
         config["hosts"][f"node{i}"] = {
             "network_node_id": ids[f"{location.name}-{node_type.name}"],
@@ -175,19 +193,7 @@ def generate_graph(
                 {
                     "args": f"--params {params_file_location}",
                     # For Debugging:
-                    "environment": {
-                        # "GOLOG_LOG_LEVEL": "debug",
-                        "GOSSIPSUB_INTEROP_NODE_ID": str(i),
-                        "QUIC_GO_DISABLE_ECN": "true",
-                        "QUIC_GO_DISABLE_GSO": "true",
-                        "QUIC_GO_DISABLE_RECEIVE_BUFFER_WARNING": "true",
-                        "QUIC_GO_SHADOW_BASIC_CONN": "true",
-                        "QUINN_UDP_SHADOW_RECVMSG": "true",
-                        "OPENSSL_ia32cap": "0:0",
-                        "AWSLC_IGNORE_FORK_UBE_DETECTION": "1",
-                        "C_LEAN_LIBP2P_GOSSIPSUB_TRACE": "1",
-                        "RUST_LOG": "info",
-                    },
+                    "environment": environment,
                     "path": binary_path,
                 }
             ],

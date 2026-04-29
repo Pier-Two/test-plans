@@ -52,6 +52,28 @@ def run_with_timeout(cmd: list[str], env: dict[str, str], timeout_sec: int) -> i
         return 124
 
 
+def prepare_c_lean_identities(cases: list[Case], output_root: Path) -> None:
+    max_nodes = max(case.node_count for case in cases if not case.unsupported)
+    identity_dir = output_root / "c-lean-identities"
+    binary = os.environ.get(
+        "C_LEAN_LIBP2P_GOSSIPSUB_BIN",
+        "/workspace/build-gossipsub-interop/bin/c_lean_libp2p_gossipsub_interop",
+    )
+    cmd = [
+        binary,
+        "--write-identities",
+        str(identity_dir),
+        "--node-count",
+        str(max_nodes),
+    ]
+    print(
+        f"[gossipsub-matrix] prepare c-lean identities dir={identity_dir} nodes={max_nodes}",
+        flush=True,
+    )
+    subprocess.run(cmd, check=True)
+    os.environ["C_LEAN_LIBP2P_GOSSIPSUB_IDENTITY_DIR"] = str(identity_dir)
+
+
 def run_case(case: Case, output_root: Path) -> Result:
     output_dir = output_root / f"{case.scenario}-{case.composition}-seed{case.seed}"
     if case.unsupported:
@@ -208,6 +230,8 @@ def main() -> int:
             unsupported=True,
         ),
     ]
+
+    prepare_c_lean_identities(cases, output_root)
 
     results = []
     for case in cases:
