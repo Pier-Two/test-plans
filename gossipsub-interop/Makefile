@@ -6,7 +6,7 @@ C_LEAN_LIBP2P_BUILD ?= $(C_LEAN_LIBP2P_ROOT)/build-gossipsub-interop
 C_LEAN_LIBP2P_GOSSIPSUB_BIN ?= $(C_LEAN_LIBP2P_BUILD)/bin/c_lean_libp2p_gossipsub_interop
 
 binaries:
-	cd go-libp2p && go build -linkshared -o gossipsub-bin
+	cd go-libp2p && go build -buildvcs=false -linkshared -o gossipsub-bin
 	cd rust-libp2p && cargo build
 
 c-lean-libp2p:
