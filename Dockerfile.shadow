@@ -2,6 +2,7 @@ FROM ubuntu:24.04
 
 ARG SHADOW_REF=v3.3.0
 ARG GO_VERSION=1.24.1
+ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/root/.cargo/bin:/root/.local/bin:/usr/local/go/bin:${PATH}"
@@ -32,7 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o /tmp/go.tgz \
+RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz" -o /tmp/go.tgz \
     && tar -C /usr/local -xzf /tmp/go.tgz \
     && rm /tmp/go.tgz \
     && go install -buildmode=shared -linkshared std
