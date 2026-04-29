@@ -34,7 +34,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o /tmp/go.tgz \
     && tar -C /usr/local -xzf /tmp/go.tgz \
-    && rm /tmp/go.tgz
+    && rm /tmp/go.tgz \
+    && go install -buildmode=shared -linkshared std
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     | sh -s -- -y --profile minimal --default-toolchain stable
