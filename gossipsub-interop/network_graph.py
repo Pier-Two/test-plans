@@ -179,7 +179,6 @@ def generate_graph(
             "QUINN_UDP_SHADOW_RECVMSG": "true",
             "OPENSSL_ia32cap": "0:0",
             "AWSLC_IGNORE_FORK_UBE_DETECTION": "1",
-            "C_LEAN_LIBP2P_GOSSIPSUB_TRACE": "1",
             "RUST_LOG": "info",
         }
         if os.environ.get("C_LEAN_LIBP2P_GOSSIPSUB_IDENTITY_DIR"):
@@ -188,8 +187,10 @@ def generate_graph(
             ]
         if os.environ.get("LIBP2P_QUIC_DEBUG"):
             environment["LIBP2P_QUIC_DEBUG"] = os.environ["LIBP2P_QUIC_DEBUG"]
-            environment["GOLOG_LOG_LEVEL"] = "debug"
-            environment["RUST_LOG"] = "info,libp2p_quic=trace,quinn=trace,rustls=trace"
+            if os.environ["LIBP2P_QUIC_DEBUG"] != "0":
+                environment["C_LEAN_LIBP2P_GOSSIPSUB_TRACE"] = "1"
+                environment["GOLOG_LOG_LEVEL"] = "debug"
+                environment["RUST_LOG"] = "info,libp2p_quic=trace,quinn=trace,rustls=trace"
 
         config["hosts"][f"node{i}"] = {
             "network_node_id": ids[f"{location.name}-{node_type.name}"],
