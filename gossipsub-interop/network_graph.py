@@ -182,7 +182,11 @@ def generate_graph(
                         "QUIC_GO_DISABLE_GSO": "true",
                         "QUIC_GO_DISABLE_RECEIVE_BUFFER_WARNING": "true",
                         "QUIC_GO_SHADOW_BASIC_CONN": "true",
-                        "RUST_LOG": "debug",
+                        "QUINN_UDP_SHADOW_RECVMSG": "true",
+                        "OPENSSL_ia32cap": "0:0",
+                        "AWSLC_IGNORE_FORK_UBE_DETECTION": "1",
+                        "C_LEAN_LIBP2P_GOSSIPSUB_TRACE": "1",
+                        "RUST_LOG": "info",
                     },
                     "path": binary_path,
                 }

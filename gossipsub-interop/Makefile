@@ -5,13 +5,17 @@ C_LEAN_LIBP2P_ROOT ?= ../../..
 C_LEAN_LIBP2P_BUILD ?= $(C_LEAN_LIBP2P_ROOT)/build-gossipsub-interop
 C_LEAN_LIBP2P_GOSSIPSUB_BIN ?= $(C_LEAN_LIBP2P_BUILD)/bin/c_lean_libp2p_gossipsub_interop
 
-binaries: patch-go-shadow
+binaries: patch-go-shadow patch-rust-shadow
 	cd go-libp2p && go build -buildvcs=false -linkshared -o gossipsub-bin
 	cd rust-libp2p && cargo build
 
 patch-go-shadow:
 	cd go-libp2p && go mod download github.com/quic-go/quic-go
 	python3 patches/patch_quic_go_shadow.py "$$(cd go-libp2p && go env GOMODCACHE)/github.com/quic-go/quic-go@v0.50.1"
+
+patch-rust-shadow:
+	cd rust-libp2p && cargo fetch
+	python3 patches/patch_quinn_udp_shadow.py "$$(find "$${CARGO_HOME:-$$HOME/.cargo}"/registry/src -path '*/quinn-udp-0.5.14' -type d | head -n 1)"
 
 c-lean-libp2p:
 	cmake -S "$(C_LEAN_LIBP2P_ROOT)" -B "$(C_LEAN_LIBP2P_BUILD)" \
@@ -64,4 +68,4 @@ test-rust-only:
 
 
 
-.PHONY: binaries all clean test patch-go-shadow
+.PHONY: binaries all clean test patch-go-shadow patch-rust-shadow

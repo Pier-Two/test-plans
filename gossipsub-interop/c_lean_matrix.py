@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import signal
 import subprocess
 import time
 from dataclasses import dataclass, asdict
@@ -29,6 +30,26 @@ class Result:
     status: str
     output_dir: str
     duration_sec: float
+
+
+def run_with_timeout(cmd: list[str], env: dict[str, str], timeout_sec: int) -> int:
+    proc = subprocess.Popen(cmd, env=env, start_new_session=True)
+    try:
+        return proc.wait(timeout=timeout_sec)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            return proc.wait()
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                return proc.wait()
+            proc.wait()
+        return 124
 
 
 def run_case(case: Case, output_root: Path) -> Result:
@@ -67,26 +88,28 @@ def run_case(case: Case, output_root: Path) -> Result:
         f"composition={case.composition} nodes={case.node_count} seed={case.seed}",
         flush=True,
     )
-    try:
-        subprocess.run(cmd, check=True, env=env, timeout=case.timeout_sec)
-        if case.partial_count is not None:
-            subprocess.run(
-                [
-                    "uv",
-                    "run",
-                    "checks/partial_messages.py",
-                    str(output_dir),
-                    "--count",
-                    str(case.partial_count),
-                ],
-                check=True,
-                env=env,
-                timeout=case.timeout_sec,
-            )
-    except subprocess.CalledProcessError:
-        status = "fail"
-    except subprocess.TimeoutExpired:
+    run_status = run_with_timeout(cmd, env, case.timeout_sec)
+    if run_status == 124:
         status = "timeout"
+    elif run_status != 0:
+        status = "fail"
+    elif case.partial_count is not None:
+        check_status = run_with_timeout(
+            [
+                "uv",
+                "run",
+                "checks/partial_messages.py",
+                str(output_dir),
+                "--count",
+                str(case.partial_count),
+            ],
+            env,
+            case.timeout_sec,
+        )
+        if check_status == 124:
+            status = "timeout"
+        elif check_status != 0:
+            status = "fail"
 
     duration = time.monotonic() - started
     print(
@@ -186,7 +209,13 @@ def main() -> int:
         ),
     ]
 
-    results = [run_case(case, output_root) for case in cases]
+    results = []
+    for case in cases:
+        results.append(run_case(case, output_root))
+        (output_root / "results.json").write_text(
+            json.dumps([asdict(result) for result in results], indent=2) + "\n"
+        )
+        (output_root / "matrix.md").write_text(render_markdown(results))
     (output_root / "results.json").write_text(
         json.dumps([asdict(result) for result in results], indent=2) + "\n"
     )
