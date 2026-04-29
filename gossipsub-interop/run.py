@@ -13,6 +13,37 @@ from network_graph import generate_graph
 params_file_name = "params.json"
 
 
+def choose_binary_paths(binaries, node_count):
+    total_weight = sum(b.percent_of_nodes for b in binaries)
+    counts = []
+    assigned = 0
+    for binary in binaries:
+        count = (node_count * binary.percent_of_nodes) // total_weight
+        counts.append(count)
+        assigned += count
+
+    remainders = sorted(
+        range(len(binaries)),
+        key=lambda i: (node_count * binaries[i].percent_of_nodes) % total_weight,
+        reverse=True,
+    )
+    for i in remainders[: node_count - assigned]:
+        counts[i] += 1
+
+    if node_count >= len(binaries):
+        for i, count in enumerate(counts):
+            if count == 0:
+                donor = max(range(len(counts)), key=lambda j: counts[j])
+                counts[donor] -= 1
+                counts[i] = 1
+
+    binary_paths = []
+    for binary, count in zip(binaries, counts):
+        binary_paths.extend([binary.path] * count)
+    random.shuffle(binary_paths)
+    return binary_paths
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -72,11 +103,7 @@ def main():
         json.dump(d, f)
 
     # Define the binaries we are running
-    binary_paths = random.choices(
-        [b.path for b in binaries],
-        weights=[b.percent_of_nodes for b in binaries],
-        k=args.node_count,
-    )
+    binary_paths = choose_binary_paths(binaries, args.node_count)
 
     # Generate the network graph and the Shadow config for the binaries
     generate_graph(

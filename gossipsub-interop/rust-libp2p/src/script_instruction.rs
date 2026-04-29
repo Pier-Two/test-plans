@@ -1,3 +1,4 @@
+use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fmt::Display;
@@ -15,6 +16,10 @@ pub struct NodeID(i32);
 impl NodeID {
     /// Generate a node from the hostname
     pub fn new() -> Result<Self, Box<dyn Error>> {
+        if let Ok(value) = env::var("GOSSIPSUB_INTEROP_NODE_ID") {
+            return Ok(NodeID(value.parse::<i32>()?));
+        }
+
         let hostname = hostname::get()?.to_string_lossy().into_owned();
 
         // Parse "nodeX" format

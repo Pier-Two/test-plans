@@ -43,8 +43,11 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
+COPY gossipsub-interop/patches/shadow-quic-udp-options.patch /tmp/shadow-quic-udp-options.patch
+
 RUN git clone --depth 1 --branch "${SHADOW_REF}" https://github.com/shadow/shadow.git /shadow \
     && cd /shadow \
+    && git apply /tmp/shadow-quic-udp-options.patch \
     && ./setup build --clean --prefix /usr/local -j2 \
     && ./setup install
 

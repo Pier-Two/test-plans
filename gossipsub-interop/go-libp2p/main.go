@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,6 +27,27 @@ import (
 var (
 	paramsFileFlag = flag.String("params", "", "the path to the params file")
 )
+
+func nodeIDFromEnvOrHostname() (int, error) {
+	if value := os.Getenv("GOSSIPSUB_INTEROP_NODE_ID"); value != "" {
+		nodeID, err := strconv.Atoi(value)
+		if err != nil {
+			return 0, err
+		}
+		return nodeID, nil
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		return 0, err
+	}
+
+	var nodeID int
+	if _, err := fmt.Sscanf(hostname, "node%d", &nodeID); err != nil {
+		return 0, err
+	}
+	return nodeID, nil
+}
 
 // pubsubOptions creates a list of options to configure our router with.
 func pubsubOptions(slogger *slog.Logger, params pubsub.GossipSubParams, pme *partialmessages.PartialMessagesExtension[peerState]) []pubsub.Option {
@@ -103,14 +125,8 @@ func main() {
 		panic(err)
 	}
 
-	hostname, err := os.Hostname()
+	nodeId, err := nodeIDFromEnvOrHostname()
 	if err != nil {
-		panic(err)
-	}
-
-	// parse for the node id
-	var nodeId int
-	if _, err := fmt.Sscanf(hostname, "node%d", &nodeId); err != nil {
 		panic(err)
 	}
 

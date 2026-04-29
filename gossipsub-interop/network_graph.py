@@ -178,6 +178,7 @@ def generate_graph(
                     "environment": {
                         # "GOLOG_LOG_LEVEL": "debug",
                         "RUST_LOG": "debug",
+                        "GOSSIPSUB_INTEROP_NODE_ID": str(i),
                     },
                     "path": binary_path,
                 }

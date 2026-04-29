@@ -1,0 +1,29 @@
+diff --git a/src/main/host/descriptor/socket/inet/udp.rs b/src/main/host/descriptor/socket/inet/udp.rs
+index af00889..a751bd6 100644
+--- a/src/main/host/descriptor/socket/inet/udp.rs
++++ b/src/main/host/descriptor/socket/inet/udp.rs
+@@ -989,6 +989,24 @@ impl UdpSocket {
+                     );
+                 }
+             }
++            (libc::IPPROTO_IP, 8)
++            | (libc::IPPROTO_IP, 10)
++            | (libc::IPPROTO_IP, 11)
++            | (libc::IPPROTO_IP, 13)
++            | (libc::IPPROTO_IPV6, 23)
++            | (libc::IPPROTO_IPV6, 25)
++            | (libc::IPPROTO_IPV6, 49)
++            | (libc::IPPROTO_IPV6, 66)
++            | (libc::IPPROTO_UDP, 103)
++            | (libc::IPPROTO_UDP, 104) => {
++                log_once_per_value_at_level!(
++                    (level, optname),
++                    (i32, i32),
++                    log::Level::Warn,
++                    log::Level::Debug,
++                    "setsockopt QUIC ancillary option level {level} opt {optname} ignored"
++                );
++            }
+             _ => {
+                 log_once_per_value_at_level!(
+                     (level, optname),
