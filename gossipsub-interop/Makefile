@@ -19,6 +19,8 @@ patch-rust-shadow:
 
 c-lean-libp2p:
 	cmake -S "$(C_LEAN_LIBP2P_ROOT)" -B "$(C_LEAN_LIBP2P_BUILD)" \
+		-DOPENSSL_NO_ASM=ON \
+		-DSECP256K1_ASM=OFF \
 		-DBUILD_TESTING=OFF \
 		-DLIBP2P_BUILD_GOSSIPSUB_INTEROP_BINARY=ON
 	cmake --build "$(C_LEAN_LIBP2P_BUILD)" --target c_lean_libp2p_gossipsub_interop --parallel
