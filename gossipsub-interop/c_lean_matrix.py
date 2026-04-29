@@ -53,7 +53,10 @@ def run_with_timeout(cmd: list[str], env: dict[str, str], timeout_sec: int) -> i
 
 
 def prepare_c_lean_identities(cases: list[Case], output_root: Path) -> None:
-    max_nodes = max(case.node_count for case in cases if not case.unsupported)
+    runnable_cases = [case for case in cases if not case.unsupported]
+    if not runnable_cases:
+        return
+    max_nodes = max(case.node_count for case in runnable_cases)
     identity_dir = output_root / "c-lean-identities"
     binary = os.environ.get(
         "C_LEAN_LIBP2P_GOSSIPSUB_BIN",
@@ -169,9 +172,25 @@ def render_markdown(results: list[Result]) -> str:
     return "\n".join(lines)
 
 
+def filter_cases(cases: list[Case], pair: str, scenario: str) -> list[Case]:
+    selected = []
+    for case in cases:
+        pair_match = pair == "all" or case.pair == pair or case.composition == pair
+        scenario_match = scenario == "all" or case.scenario == scenario
+        if pair_match and scenario_match:
+            selected.append(case)
+    return selected
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-root", required=True)
+    parser.add_argument(
+        "--pair", default=os.environ.get("GOSSIPSUB_INTEROP_PAIR", "all")
+    )
+    parser.add_argument(
+        "--scenario", default=os.environ.get("GOSSIPSUB_INTEROP_SCENARIO", "all")
+    )
     args = parser.parse_args()
 
     output_root = Path(args.output_root).resolve()
@@ -232,6 +251,11 @@ def main() -> int:
             unsupported=True,
         ),
     ]
+    cases = filter_cases(cases, args.pair, args.scenario)
+    if not cases:
+        raise SystemExit(
+            f"no gossipsub interop cases match pair={args.pair} scenario={args.scenario}"
+        )
 
     prepare_c_lean_identities(cases, output_root)
 
