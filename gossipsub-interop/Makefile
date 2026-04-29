@@ -19,6 +19,7 @@ patch-rust-shadow:
 
 c-lean-libp2p:
 	cmake -S "$(C_LEAN_LIBP2P_ROOT)" -B "$(C_LEAN_LIBP2P_BUILD)" \
+		-DCMAKE_BUILD_TYPE=Release \
 		-DOPENSSL_NO_ASM=ON \
 		-DSECP256K1_ASM=OFF \
 		-DBUILD_TESTING=OFF \
