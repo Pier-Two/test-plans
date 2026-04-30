@@ -4,7 +4,7 @@ use libp2p::{
 };
 use libp2p_gossipsub::{self, MessageAuthenticity, MessageId, ValidationMode};
 use slog::{o, Drain, FnValue, Logger, PushFnValue, Record};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tracing_subscriber::{layer::SubscriberExt, Layer};
 
 mod bitmap;
@@ -15,6 +15,9 @@ mod script_instruction;
 
 use experiment::{run_experiment, MyBehavior};
 use script_instruction::{ExperimentParams, NodeID};
+
+const QUIC_IDLE_TIMEOUT_MS: u32 = 120_000;
+const QUIC_KEEP_ALIVE_INTERVAL_SECS: u64 = 5;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
@@ -98,8 +101,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let local_peer_id = PeerId::from(local_key.public());
     slog::info!(stderr_logger, "Local peer id: {}", local_peer_id);
     slog::info!(stderr_logger, "Node ID: {}", node_id);
+    // Keep the rust harness aligned with the c-lean/go interop nodes. The
+    // subnet-blob-msg workload sends 98 KiB messages at a 12s cadence, and the
+    // rust-libp2p default 10s QUIC idle timeout can expire while large gossip
+    // retransmissions keep the connection congestion-blocked.
+    let mut quic_config = quic::Config::new(&local_key);
+    quic_config.max_idle_timeout = QUIC_IDLE_TIMEOUT_MS;
+    quic_config.keep_alive_interval = Duration::from_secs(QUIC_KEEP_ALIVE_INTERVAL_SECS);
+
     // Create a transport
-    let transport = quic::tokio::Transport::new(quic::Config::new(&local_key))
+    let transport = quic::tokio::Transport::new(quic_config)
         .map(|(peer_id, conn), _| (peer_id, StreamMuxerBox::new(conn)))
         .boxed();
 
