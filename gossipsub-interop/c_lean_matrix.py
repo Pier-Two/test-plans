@@ -201,7 +201,7 @@ def main() -> int:
         Case("c-lean-libp2p/go-libp2p", "c-lean-and-go", "simple-fanout", 8, 1),
         Case("c-lean-libp2p/rust-libp2p", "c-lean-and-rust", "subnet-blob-msg", 8, 1),
         Case("c-lean-libp2p/rust-libp2p", "c-lean-and-rust", "simple-fanout", 8, 1),
-        Case("c-lean-libp2p/go-libp2p/rust-libp2p", "c-lean-rust-go", "subnet-blob-msg", 9, 2),
+        Case("c-lean-libp2p/go-libp2p/rust-libp2p", "c-lean-rust-go", "subnet-blob-msg", 32, 2),
         Case(
             "c-lean-libp2p/go-libp2p",
             "not-run",
