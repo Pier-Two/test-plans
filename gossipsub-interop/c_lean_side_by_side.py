@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 BASE_LAYOUT = "go,c-lean,rust,go,rust,go,c-lean,c-lean,rust"
+ALL_C_LEAN_SWAPPED_LAYOUT = "go,rust,rust,go,rust,go,rust,rust,rust"
 NODE_COUNT = 9
 DEFAULT_TIMEOUT_SEC = 300
 
@@ -167,6 +168,16 @@ def main() -> int:
         run_layout(
             f"swap-node{args.swap_index}-{args.replacement}",
             swapped_layout(args.swap_index, args.replacement),
+            output_root,
+            args.scenario,
+            args.seed,
+            args.timeout_sec,
+        )
+    )
+    results.append(
+        run_layout(
+            "swap-all-c-lean-rust",
+            ALL_C_LEAN_SWAPPED_LAYOUT,
             output_root,
             args.scenario,
             args.seed,
