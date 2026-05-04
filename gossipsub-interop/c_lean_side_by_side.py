@@ -111,6 +111,7 @@ def run_layout(
         str(seed),
         "--binary_layout",
         layout,
+        "--preserve_composition_rng",
         "--output_dir",
         str(output_dir),
     ]

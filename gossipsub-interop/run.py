@@ -86,6 +86,14 @@ def main():
     parser.add_argument("--composition", type=str, required=False, default="all-go")
     parser.add_argument("--output_dir", type=str, required=False)
     parser.add_argument("--binary_layout", type=str, required=False)
+    parser.add_argument(
+        "--preserve_composition_rng",
+        action="store_true",
+        help=(
+            "When using --binary_layout, still consume the composition shuffle so "
+            "the generated topology matches a normal composition run."
+        ),
+    )
     args = parser.parse_args()
 
     shadow_outputs_dir = os.path.join(os.getcwd(), "shadow-outputs")
@@ -131,6 +139,8 @@ def main():
     if args.binary_layout is None:
         binary_paths = choose_binary_paths(binaries, args.node_count)
     else:
+        if args.preserve_composition_rng:
+            choose_binary_paths(binaries, args.node_count)
         binary_paths = choose_binary_paths_from_layout(args.binary_layout, args.node_count)
 
     # Generate the network graph and the Shadow config for the binaries
