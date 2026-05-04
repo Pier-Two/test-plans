@@ -13,6 +13,21 @@ from network_graph import generate_graph
 params_file_name = "params.json"
 
 
+def binary_path_for_name(name):
+    c_lean_binary = os.environ.get(
+        "C_LEAN_LIBP2P_GOSSIPSUB_BIN",
+        "../../../build-gossipsub-interop/bin/c_lean_libp2p_gossipsub_interop",
+    )
+    paths = {
+        "c-lean": c_lean_binary,
+        "go": "go-libp2p/gossipsub-bin",
+        "rust": "rust-libp2p/target/debug/rust-libp2p-gossip",
+    }
+    if name not in paths:
+        raise ValueError(f"unknown binary layout entry: {name}")
+    return paths[name]
+
+
 def choose_binary_paths(binaries, node_count):
     total_weight = sum(b.percent_of_nodes for b in binaries)
     counts = []
@@ -44,6 +59,15 @@ def choose_binary_paths(binaries, node_count):
     return binary_paths
 
 
+def choose_binary_paths_from_layout(layout, node_count):
+    names = [item.strip() for item in layout.split(",") if item.strip()]
+    if len(names) != node_count:
+        raise ValueError(
+            f"binary layout has {len(names)} entries, expected node_count={node_count}"
+        )
+    return [binary_path_for_name(name) for name in names]
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -61,6 +85,7 @@ def main():
     )
     parser.add_argument("--composition", type=str, required=False, default="all-go")
     parser.add_argument("--output_dir", type=str, required=False)
+    parser.add_argument("--binary_layout", type=str, required=False)
     args = parser.parse_args()
 
     shadow_outputs_dir = os.path.join(os.getcwd(), "shadow-outputs")
@@ -103,7 +128,10 @@ def main():
         json.dump(d, f)
 
     # Define the binaries we are running
-    binary_paths = choose_binary_paths(binaries, args.node_count)
+    if args.binary_layout is None:
+        binary_paths = choose_binary_paths(binaries, args.node_count)
+    else:
+        binary_paths = choose_binary_paths_from_layout(args.binary_layout, args.node_count)
 
     # Generate the network graph and the Shadow config for the binaries
     generate_graph(

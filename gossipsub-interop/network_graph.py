@@ -191,6 +191,8 @@ def generate_graph(
                 environment["C_LEAN_LIBP2P_GOSSIPSUB_TRACE"] = "1"
                 environment["GOLOG_LOG_LEVEL"] = "debug"
                 environment["RUST_LOG"] = "info,libp2p_quic=trace,quinn=trace,rustls=trace"
+        if os.environ.get("LIBP2P_AUTOPSY"):
+            environment["LIBP2P_AUTOPSY"] = os.environ["LIBP2P_AUTOPSY"]
 
         config["hosts"][f"node{i}"] = {
             "network_node_id": ids[f"{location.name}-{node_type.name}"],
